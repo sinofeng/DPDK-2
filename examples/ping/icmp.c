@@ -467,7 +467,7 @@ arp_icmp_process(uint8_t port)
 		l2_len = sizeof(struct ether_hdr);
 		#ifdef DEBUG
 			printf("\nPort %d pkt-len=%u nb-segs=%u\n",
-			       fs->rx_port, pkt->pkt_len, pkt->nb_segs);
+			       port, pkt->pkt_len, pkt->nb_segs);
 			ether_addr_dump("  ETH:  src=", &eth_h->s_addr);
 			ether_addr_dump(" dst=", &eth_h->d_addr);
 		#endif

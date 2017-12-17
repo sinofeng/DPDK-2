@@ -187,7 +187,7 @@ main(int argc, char *argv[])
 	{
 		pname = strstr(argv[i], "iface=");
 		if(pname) {
-				snprintf(real_device, sizeof(real_device), "%s", pname+1);
+				snprintf(real_device, sizeof(real_device), "%s", pname+strlen("iface="));
 				break;
 		}
 	}
