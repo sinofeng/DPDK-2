@@ -66,6 +66,48 @@ struct ether_addr null_addr =
 uint32_t icmp_reached =0;
 uint64_t icmp_reached_tick;
 uint16_t curr_seq = 0;
+typedef unsigned long  u_long;
+
+/* *************************************** */
+
+static char* pfring_format_numbers(double val, char *buf, u_int buf_len, u_int8_t add_decimals) {
+  uint32_t a1 = ((u_long)val / 1000000000) % 1000;
+  uint32_t a = ((u_long)val / 1000000) % 1000;
+  uint32_t b = ((u_long)val / 1000) % 1000;
+  uint32_t c = (u_long)val % 1000;
+  uint32_t d = (uint32_t)((val - (u_long)val)*100) % 100;
+
+  if(add_decimals) {
+    if(val >= 1000000000) {
+      snprintf(buf, buf_len, "%u'%03u'%03u'%03u.%02d", a1, a, b, c, d);
+    } else if(val >= 1000000) {
+      snprintf(buf, buf_len, "%u'%03u'%03u.%02d", a, b, c, d);
+    } else if(val >= 100000) {
+      snprintf(buf, buf_len, "%u'%03u.%02d", b, c, d);
+    } else if(val >= 1000) {
+      snprintf(buf, buf_len, "%u'%03u.%02d", b, c, d);
+    } else
+      snprintf(buf, buf_len, "%.2f", val);
+  } else {
+    if(val >= 1000000000) {
+      snprintf(buf, buf_len, "%u'%03u'%03u'%03u", a1, a, b, c);
+    } else if(val >= 1000000) {
+      snprintf(buf, buf_len, "%u'%03u'%03u", a, b, c);
+    } else if(val >= 100000) {
+      snprintf(buf, buf_len, "%u'%03u", b, c);
+    } else if(val >= 1000) {
+      snprintf(buf, buf_len, "%u'%03u", b, c);
+    } else
+      snprintf(buf, buf_len, "%u", (unsigned int)val);
+  }
+
+  return(buf);
+}
+
+
+static double ticks_to_us(uint64_t dtick,const uint64_t hz){
+  return ((double) 1000000 /* us */) / ( hz / dtick );
+}
 
 /* ping.c: measures the round-trip time. */
 
@@ -179,7 +221,7 @@ main(int argc, char *argv[])
 	unsigned nb_ports;
 	uint8_t portid, i;
 	int max_ping_times = 3;
-	char real_device[IFNAMSIZ]={'\0'}, *pname, *dst, *times;
+	char real_device[IFNAMSIZ]={'\0'}, *pname, *dst, *times, buf1[64];
 
 	for(i=0; i<argc; i++)
 	{
@@ -257,7 +299,7 @@ main(int argc, char *argv[])
 	if ((slave_core_id >= RTE_MAX_LCORE) || (slave_core_id == 0))
 		return -EPERM;
 
-	printf("Starting lcore_main on core %d:%d Our IP:%d.%d.%d.%d\n",
+	printf("Starting lcore_main on core %d:%d Our IP:%d.%d.%d.%d CPU %fMhz\n",
 			slave_core_id,
 			rte_eal_remote_launch((lcore_function_t *)lcore_main,
 					NULL,
@@ -265,7 +307,8 @@ main(int argc, char *argv[])
  					nic_ip & 0xFF,
  					(nic_ip>>8) & 0xFF,
  					(nic_ip>>16) & 0xFF,
-					(nic_ip>>24) & 0xFF
+					(nic_ip>>24) & 0xFF, 
+					((double)rte_get_tsc_hz())/(1024*1024)
 		);
 
 	if(dst_ip == 0)
@@ -321,7 +364,7 @@ re_start:
     }
     else
     {
-        printf("\nPackets received time diff: %"PRIu64" cycles\n", icmp_reached_tick - icmp_sended_tick);
+        printf("\nPackets received time diff: %s usec\n", pfring_format_numbers(ticks_to_us(icmp_reached_tick - icmp_sended_tick,rte_get_tsc_hz()), buf1, sizeof(buf1), 1));
     }
 
     curr_seq++;
