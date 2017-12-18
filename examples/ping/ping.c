@@ -179,13 +179,22 @@ main(int argc, char *argv[])
 	unsigned nb_ports;
 	uint8_t portid, i;
 	int max_ping_times = 3;
-	char real_device[IFNAMSIZ]={'\0'}, *pname, c;
+	char real_device[IFNAMSIZ]={'\0'}, *pname, *dst;
 
 	for(i=0; i<argc; i++)
 	{
 		pname = strstr(argv[i], "iface=");
 		if(pname) {
 				snprintf(real_device, sizeof(real_device), "%s", pname+strlen("iface="));
+				break;
+		}
+	}
+
+	for(i=0; i<argc; i++)
+	{
+		dst = strstr(argv[i], "dest=");
+		if(dst) {
+				dst_ip = rte_inet_addr(dst+strlen("dest="));
 				break;
 		}
 	}
@@ -197,17 +206,6 @@ main(int argc, char *argv[])
 
 	argc -= ret;
 	argv += ret;
-
-	while((c = getopt(argc,argv,"d:n:")) != '?') {
-			switch(c) {
-			case 'd':
-					dst_ip = rte_inet_addr(optarg);
-					break;
-			case 'n':
-					max_ping_times = atoi(optarg);
-					break;
-			}
-	}
 
 	/* Check that there is an even number of ports to send/receive on. */
 	nb_ports = rte_eth_dev_count();
