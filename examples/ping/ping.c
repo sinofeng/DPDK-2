@@ -55,7 +55,13 @@ uint32_t nic_ip = 0;
 static struct rte_mempool *mbuf_pool;
 
 static const struct rte_eth_conf port_conf_default = {
-	.rxmode = { .max_rx_pkt_len = ETHER_MAX_LEN }
+	.rxmode = { 
+		.mq_mode = ETH_MQ_RX_DCB,
+		.max_rx_pkt_len = ETHER_MAX_LEN,
+		},
+		.txmode = {
+		.mq_mode = ETH_MQ_TX_DCB,
+	},
 };
 
 struct ether_addr nic_addr;
