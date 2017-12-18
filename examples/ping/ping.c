@@ -50,8 +50,6 @@
 #define MBUF_CACHE_SIZE 250
 #define BURST_SIZE 32
 
-#define ICMP_ID 0x9988
-
 uint32_t dst_ip = 0;
 uint32_t nic_ip = 0;
 static struct rte_mempool *mbuf_pool;

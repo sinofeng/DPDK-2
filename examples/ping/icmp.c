@@ -78,6 +78,10 @@
 extern struct ether_addr nic_addr;
 extern struct ether_addr dst_addr;
 extern uint32_t nic_ip;
+extern uint32_t dst_ip;
+extern uint32_t icmp_reached;
+extern uint64_t icmp_reached_tick;
+extern uint16_t curr_seq;
 
 #ifdef DEBUG
 static const char *
@@ -523,30 +527,44 @@ arp_icmp_process(uint8_t port)
 				ipv4_addr_dump(" tip=", ip_addr);
 				printf("\n");
 			#endif
-			if (arp_op != ARP_OP_REQUEST) {
+			if (arp_op != ARP_OP_REQUEST && arp_h->arp_data.arp_tip == nic_ip) {
+				/*
+				 * Build ARP reply.
+				 */
+				
+				/* Use source MAC address as destination MAC address. */
+				ether_addr_copy(&eth_h->s_addr, &eth_h->d_addr);
+				/* Set source MAC address with MAC address of TX port */
+				ether_addr_copy(&nic_addr, &eth_h->s_addr);
+				
+				arp_h->arp_op = rte_cpu_to_be_16(ARP_OP_REPLY);
+				ether_addr_copy(&arp_h->arp_data.arp_tha, &eth_addr);
+				ether_addr_copy(&arp_h->arp_data.arp_sha, &arp_h->arp_data.arp_tha);
+				ether_addr_copy(&eth_h->s_addr, &arp_h->arp_data.arp_sha);
+				
+				/* Swap IP addresses in ARP payload */
+				ip_addr = arp_h->arp_data.arp_sip;
+				arp_h->arp_data.arp_sip = arp_h->arp_data.arp_tip;
+				arp_h->arp_data.arp_tip = ip_addr;
+				pkts_burst[nb_replies++] = pkt;
+
 				rte_pktmbuf_free(pkt);
 				continue;
+			} else if(arp_op == ARP_OP_REPLY && arp_h->arp_data.arp_tip == nic_ip &&  arp_h->arp_data.arp_sip== dst_ip) {
+            /*
+             * Get reply mac and ip entry.
+             */
+						ether_addr_copy(&arp_h->arp_data.arp_sha, &dst_addr);
+
+#ifdef DEBUG
+            ether_addr_dump(" 			 dst_mac=", &dst_addr);
+#endif
+            return;
+       }
+			 else {
+				 rte_pktmbuf_free(pkt);
 			}
 
-			/*
-			 * Build ARP reply.
-			 */
-
-			/* Use source MAC address as destination MAC address. */
-			ether_addr_copy(&eth_h->s_addr, &eth_h->d_addr);
-			/* Set source MAC address with MAC address of TX port */
-			ether_addr_copy(&nic_addr, &eth_h->s_addr);
-
-			arp_h->arp_op = rte_cpu_to_be_16(ARP_OP_REPLY);
-			ether_addr_copy(&arp_h->arp_data.arp_tha, &eth_addr);
-			ether_addr_copy(&arp_h->arp_data.arp_sha, &arp_h->arp_data.arp_tha);
-			ether_addr_copy(&eth_h->s_addr, &arp_h->arp_data.arp_sha);
-
-			/* Swap IP addresses in ARP payload */
-			ip_addr = arp_h->arp_data.arp_sip;
-			arp_h->arp_data.arp_sip = arp_h->arp_data.arp_tip;
-			arp_h->arp_data.arp_tip = ip_addr;
-			pkts_burst[nb_replies++] = pkt;
 			continue;
 		}
 
@@ -569,62 +587,73 @@ arp_icmp_process(uint8_t port)
 		icmp_h = (struct icmp_hdr *) ((char *)ip_h +
 					      sizeof(struct ipv4_hdr));
 		if (! ((ip_h->next_proto_id == IPPROTO_ICMP) &&
-		       (icmp_h->icmp_type == IP_ICMP_ECHO_REQUEST) &&
 		       (icmp_h->icmp_code == 0))) {
 			rte_pktmbuf_free(pkt);
 			continue;
 		}
 
-		#ifdef DEBUG
-			printf("  ICMP: echo request seq id=%d\n",
-			       rte_be_to_cpu_16(icmp_h->icmp_seq_nb));
-    #endif
+		if((icmp_h->icmp_type == IP_ICMP_ECHO_REQUEST)) {
+			#ifdef DEBUG
+				printf("  ICMP: echo request seq id=%d\n",
+				       rte_be_to_cpu_16(icmp_h->icmp_seq_nb));
+	    #endif
 
-		/*
-		 * Prepare ICMP echo reply to be sent back.
-		 * - switch ethernet source and destinations addresses,
-		 * - use the request IP source address as the reply IP
-		 *    destination address,
-		 * - if the request IP destination address is a multicast
-		 *   address:
-		 *     - choose a reply IP source address different from the
-		 *       request IP source address,
-		 *     - re-compute the IP header checksum.
-		 *   Otherwise:
-		 *     - switch the request IP source and destination
-		 *       addresses in the reply IP header,
-		 *     - keep the IP header checksum unchanged.
-		 * - set IP_ICMP_ECHO_REPLY in ICMP header.
-		 * ICMP checksum is computed by assuming it is valid in the
-		 * echo request and not verified.
-		 */
-		ether_addr_copy(&eth_h->s_addr, &eth_addr);
-		ether_addr_copy(&eth_h->d_addr, &eth_h->s_addr);
-		ether_addr_copy(&eth_addr, &eth_h->d_addr);
-		ip_addr = ip_h->src_addr;
-		if (is_multicast_ipv4_addr(ip_h->dst_addr)) {
-			uint32_t ip_src;
+			/*
+			 * Prepare ICMP echo reply to be sent back.
+			 * - switch ethernet source and destinations addresses,
+			 * - use the request IP source address as the reply IP
+			 *    destination address,
+			 * - if the request IP destination address is a multicast
+			 *   address:
+			 *     - choose a reply IP source address different from the
+			 *       request IP source address,
+			 *     - re-compute the IP header checksum.
+			 *   Otherwise:
+			 *     - switch the request IP source and destination
+			 *       addresses in the reply IP header,
+			 *     - keep the IP header checksum unchanged.
+			 * - set IP_ICMP_ECHO_REPLY in ICMP header.
+			 * ICMP checksum is computed by assuming it is valid in the
+			 * echo request and not verified.
+			 */
+			ether_addr_copy(&eth_h->s_addr, &eth_addr);
+			ether_addr_copy(&eth_h->d_addr, &eth_h->s_addr);
+			ether_addr_copy(&eth_addr, &eth_h->d_addr);
+			ip_addr = ip_h->src_addr;
+			if (is_multicast_ipv4_addr(ip_h->dst_addr)) {
+				uint32_t ip_src;
 
-			ip_src = rte_be_to_cpu_32(ip_addr);
-			if ((ip_src & 0x00000003) == 1)
-				ip_src = (ip_src & 0xFFFFFFFC) | 0x00000002;
-			else
-				ip_src = (ip_src & 0xFFFFFFFC) | 0x00000001;
-			ip_h->src_addr = rte_cpu_to_be_32(ip_src);
-			ip_h->dst_addr = ip_addr;
-			ip_h->hdr_checksum = ipv4_hdr_cksum(ip_h);
-		} else {
-			ip_h->src_addr = ip_h->dst_addr;
-			ip_h->dst_addr = ip_addr;
+				ip_src = rte_be_to_cpu_32(ip_addr);
+				if ((ip_src & 0x00000003) == 1)
+					ip_src = (ip_src & 0xFFFFFFFC) | 0x00000002;
+				else
+					ip_src = (ip_src & 0xFFFFFFFC) | 0x00000001;
+				ip_h->src_addr = rte_cpu_to_be_32(ip_src);
+				ip_h->dst_addr = ip_addr;
+				ip_h->hdr_checksum = ipv4_hdr_cksum(ip_h);
+			} else {
+				ip_h->src_addr = ip_h->dst_addr;
+				ip_h->dst_addr = ip_addr;
+			}
+			icmp_h->icmp_type = IP_ICMP_ECHO_REPLY;
+			cksum = ~icmp_h->icmp_cksum & 0xffff;
+			cksum += ~RTE_CPU_TO_BE_16(IP_ICMP_ECHO_REQUEST << 8) & 0xffff;
+			cksum += RTE_CPU_TO_BE_16(IP_ICMP_ECHO_REPLY << 8);
+			cksum = (cksum & 0xffff) + (cksum >> 16);
+			cksum = (cksum & 0xffff) + (cksum >> 16);
+			icmp_h->icmp_cksum = ~cksum;
+			pkts_burst[nb_replies++] = pkt;
+		} else if((icmp_h->icmp_type == IP_ICMP_ECHO_REPLY)) {
+#ifdef DEBUG
+					printf("	ICMP: echo response id=%x seq==%x\n",
+								 RTE_BE_TO_CPU_16(icmp_h->icmp_ident), RTE_BE_TO_CPU_16(icmp_h->icmp_seq_nb));
+#endif
+							
+							if(RTE_BE_TO_CPU_16(icmp_h->icmp_ident) == ICMP_ID && RTE_BE_TO_CPU_16(icmp_h->icmp_seq_nb) == curr_seq) {
+									icmp_reached = 1;
+									icmp_reached_tick = rte_rdtsc();;
+							}
 		}
-		icmp_h->icmp_type = IP_ICMP_ECHO_REPLY;
-		cksum = ~icmp_h->icmp_cksum & 0xffff;
-		cksum += ~RTE_CPU_TO_BE_16(IP_ICMP_ECHO_REQUEST << 8) & 0xffff;
-		cksum += RTE_CPU_TO_BE_16(IP_ICMP_ECHO_REPLY << 8);
-		cksum = (cksum & 0xffff) + (cksum >> 16);
-		cksum = (cksum & 0xffff) + (cksum >> 16);
-		icmp_h->icmp_cksum = ~cksum;
-		pkts_burst[nb_replies++] = pkt;
 	}
 
 	/* Send back ICMP echo replies, if any. */

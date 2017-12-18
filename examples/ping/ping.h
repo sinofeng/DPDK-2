@@ -1,6 +1,9 @@
 #ifndef __PING_H__
 #define __PING_H__
 
+
+#define ICMP_ID 0x9988
+
 extern uint32_t get_ipaddrs(char *device);
 extern uint32_t rte_inet_addr(const char *cp);
 extern void arp_icmp_process(uint8_t port);
