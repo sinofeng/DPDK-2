@@ -202,7 +202,7 @@ main(int argc, char *argv[])
 	for(i=0; i<argc; i++)
 	{
 		times = strstr(argv[i], "times=");
-		if(dst) {
+		if(times) {
 				max_ping_times = atoi(times+strlen("times="));
 				break;
 		}
