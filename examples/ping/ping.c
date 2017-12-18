@@ -345,8 +345,8 @@ re_start:
         }
     }
 
-    icmp_sended_tick = rte_rdtsc();
     build_icmp_echo_xmit(mbuf_pool, 0, dst_ip, ICMP_ID, curr_seq);
+    icmp_sended_tick = rte_rdtsc();
     icmp_reached = 0;
     int icmp_retry = 0;
     while(icmp_retry < 30) {
