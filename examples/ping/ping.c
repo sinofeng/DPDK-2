@@ -179,7 +179,7 @@ main(int argc, char *argv[])
 	unsigned nb_ports;
 	uint8_t portid, i;
 	int max_ping_times = 3;
-	char real_device[IFNAMSIZ]={'\0'}, *pname, *dst;
+	char real_device[IFNAMSIZ]={'\0'}, *pname, *dst, *times;
 
 	for(i=0; i<argc; i++)
 	{
@@ -198,6 +198,15 @@ main(int argc, char *argv[])
 				break;
 		}
 	}
+
+	for(i=0; i<argc; i++)
+	{
+		times = strstr(argv[i], "times=");
+		if(dst) {
+				max_ping_times = atoi(times+strlen("times="));
+				break;
+		}
+	}	
 
 	/* Initialize the Environment Abstraction Layer (EAL). */
 	int ret = rte_eal_init(argc, argv);
@@ -253,10 +262,10 @@ main(int argc, char *argv[])
 			rte_eal_remote_launch((lcore_function_t *)lcore_main,
 					NULL,
 					slave_core_id),
-					(nic_ip>>24) & 0xFF,
-					(nic_ip>>16) & 0xFF,
-					(nic_ip>>8) & 0xFF,
-					nic_ip & 0xFF
+ 					nic_ip & 0xFF,
+ 					(nic_ip>>8) & 0xFF,
+ 					(nic_ip>>16) & 0xFF,
+					(nic_ip>>24) & 0xFF
 		);
 
 	if(dst_ip == 0)

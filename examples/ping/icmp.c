@@ -527,7 +527,7 @@ arp_icmp_process(uint8_t port)
 				ipv4_addr_dump(" tip=", ip_addr);
 				printf("\n");
 			#endif
-			if (arp_op != ARP_OP_REQUEST && arp_h->arp_data.arp_tip == nic_ip) {
+			if (arp_op == ARP_OP_REQUEST && arp_h->arp_data.arp_tip == nic_ip) {
 				/*
 				 * Build ARP reply.
 				 */
