@@ -55,13 +55,7 @@ uint32_t nic_ip = 0;
 static struct rte_mempool *mbuf_pool;
 
 static const struct rte_eth_conf port_conf_default = {
-	.rxmode = { 
-		.mq_mode = ETH_MQ_RX_DCB,
-		.max_rx_pkt_len = ETHER_MAX_LEN,
-		},
-		.txmode = {
-		.mq_mode = ETH_MQ_TX_DCB,
-	},
+	.rxmode = { .max_rx_pkt_len = ETHER_MAX_LEN }
 };
 
 struct ether_addr nic_addr;
@@ -227,13 +221,13 @@ main(int argc, char *argv[])
 	unsigned nb_ports;
 	uint8_t portid, i;
 	int max_ping_times = 3;
-	char real_device[IFNAMSIZ]={'\0'}, *pname, *dst, *times, buf1[64];
+	char *local, *dst, *times, buf1[64];
 
 	for(i=0; i<argc; i++)
 	{
-		pname = strstr(argv[i], "iface=");
-		if(pname) {
-				snprintf(real_device, sizeof(real_device), "%s", pname+strlen("iface="));
+		local = strstr(argv[i], "local=");
+		if(local) {
+				nic_ip = rte_inet_addr(local+strlen("local="));
 				break;
 		}
 	}
@@ -264,11 +258,7 @@ main(int argc, char *argv[])
 	argc -= ret;
 	argv += ret;
 
-	/* Check that there is an even number of ports to send/receive on. */
 	nb_ports = rte_eth_dev_count();
-	if (nb_ports != 1)
-		rte_exit(EXIT_FAILURE, "Error: number of ports must be one\n");
-
 	/* Creates a new mempool in memory to hold the mbufs. */
 	mbuf_pool = rte_pktmbuf_pool_create("MBUF_POOL", NUM_MBUFS * nb_ports,
 		MBUF_CACHE_SIZE, 0, RTE_MBUF_DEFAULT_BUF_SIZE, rte_socket_id());
@@ -278,9 +268,8 @@ main(int argc, char *argv[])
 
 	rte_eth_macaddr_get(0, &nic_addr);
 
-	nic_ip = get_ipaddrs(real_device);
 	if(!nic_ip) {
-			printf("cannot get primary address from nic %s\n", real_device);
+			printf("nic address is not set\n");
 			exit(0);
 	}
 

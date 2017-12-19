@@ -456,7 +456,7 @@ arp_icmp_process(uint8_t port)
 	 * First, receive a burst of packets.
 	 */
 	nb_rx = rte_eth_rx_burst(port, 0, pkts_burst,
-				 1);
+				 MAX_PKT_BURST);
 	if (unlikely(nb_rx == 0))
 		return;
 
