@@ -346,6 +346,7 @@ re_start:
     build_icmp_echo_xmit(mbuf_pool, 0, dst_ip, ICMP_ID, curr_seq);
     icmp_round_trip_sended_tick = rte_rdtsc();
     icmp_reached = 0;
+    icmp_retry = 0;
     
     while(icmp_retry < 30) {
 
@@ -375,9 +376,6 @@ re_start:
     retry++;
 	}
 
-mp_wait:
-	rte_eal_mp_wait_lcore();
-
   if(packets_received > 0) {
     const double avg_delay = ((double)sum_delay)/packets_received;
     printf("\nOne-way Packets received: %d\n", packets_received);
@@ -387,6 +385,9 @@ mp_wait:
   } else {
     printf("\nNo packets received => no stats\n");
   }
+
+mp_wait:
+	rte_eal_mp_wait_lcore();
 
 	return 0;
 }
