@@ -547,9 +547,6 @@ arp_icmp_process(uint8_t port)
 				arp_h->arp_data.arp_sip = arp_h->arp_data.arp_tip;
 				arp_h->arp_data.arp_tip = ip_addr;
 				pkts_burst[nb_replies++] = pkt;
-
-				rte_pktmbuf_free(pkt);
-				continue;
 			} else if(arp_op == ARP_OP_REPLY && arp_h->arp_data.arp_tip == nic_ip &&  arp_h->arp_data.arp_sip== dst_ip) {
             /*
              * Get reply mac and ip entry.
@@ -559,9 +556,8 @@ arp_icmp_process(uint8_t port)
 #ifdef DEBUG
             ether_addr_dump(" 			 dst_mac=", &dst_addr);
 #endif
-            return;
-       }
-			 else {
+						rte_pktmbuf_free(pkt);
+      } else {
 				 rte_pktmbuf_free(pkt);
 			}
 
@@ -572,6 +568,7 @@ arp_icmp_process(uint8_t port)
 			rte_pktmbuf_free(pkt);
 			continue;
 		}
+
 		ip_h = (struct ipv4_hdr *) ((char *)eth_h + l2_len);
 		#ifdef DEBUG
 			ipv4_addr_dump("  IPV4: src=", ip_h->src_addr);
@@ -645,14 +642,15 @@ arp_icmp_process(uint8_t port)
 			pkts_burst[nb_replies++] = pkt;
 		} else if((icmp_h->icmp_type == IP_ICMP_ECHO_REPLY)) {
 #ifdef DEBUG
-					printf("	ICMP: echo response id=%x seq==%x\n",
-								 RTE_BE_TO_CPU_16(icmp_h->icmp_ident), RTE_BE_TO_CPU_16(icmp_h->icmp_seq_nb));
+			printf("	ICMP: echo response id=%x seq==%x\n",
+						 RTE_BE_TO_CPU_16(icmp_h->icmp_ident), RTE_BE_TO_CPU_16(icmp_h->icmp_seq_nb));
 #endif
-							
-							if(RTE_BE_TO_CPU_16(icmp_h->icmp_ident) == ICMP_ID && RTE_BE_TO_CPU_16(icmp_h->icmp_seq_nb) == curr_seq) {
-									icmp_reached = 1;
-									icmp_reached_tick = rte_rdtsc();;
-							}
+					
+			if(RTE_BE_TO_CPU_16(icmp_h->icmp_ident) == ICMP_ID && RTE_BE_TO_CPU_16(icmp_h->icmp_seq_nb) == curr_seq) {
+					icmp_reached = 1;
+					icmp_reached_tick = rte_rdtsc();
+					rte_pktmbuf_free(pkt);
+			}
 		}
 	}
 
