@@ -222,6 +222,11 @@ main(int argc, char *argv[])
 	uint8_t portid, i;
 	int max_ping_times = 3;
 	char *local, *dst, *times, buf1[64];
+	int retry = 0, packets_received = 0;
+  uint64_t max_delay = 0,min_delay=(uint64_t)-1,sum_delay=0;
+	uint64_t icmp_one_way_sended_tick, curr_ticks_diff;
+	uint64_t icmp_round_trip_sended_tick;
+  int icmp_retry = 0;
 
 	for(i=0; i<argc; i++)
 	{
@@ -309,9 +314,6 @@ main(int argc, char *argv[])
 	if(dst_ip == 0)
 			goto mp_wait;
 
-	int retry = 0;
-	uint64_t icmp_sended_tick;
-
 	while(1) {
 
 re_start:
@@ -340,10 +342,11 @@ re_start:
         }
     }
 
+    icmp_one_way_sended_tick = rte_rdtsc();
     build_icmp_echo_xmit(mbuf_pool, 0, dst_ip, ICMP_ID, curr_seq);
-    icmp_sended_tick = rte_rdtsc();
+    icmp_round_trip_sended_tick = rte_rdtsc();
     icmp_reached = 0;
-    int icmp_retry = 0;
+    
     while(icmp_retry < 30) {
 
         if(icmp_reached)
@@ -359,7 +362,13 @@ re_start:
     }
     else
     {
-        printf("\nPackets received time diff: %s usec\n", pfring_format_numbers(ticks_to_us(icmp_reached_tick - icmp_sended_tick,rte_get_tsc_hz()), buf1, sizeof(buf1), 1));
+        packets_received++;
+        curr_ticks_diff = (icmp_reached_tick - icmp_one_way_sended_tick)/2;
+        if(curr_ticks_diff > max_delay) max_delay = curr_ticks_diff;
+        if(curr_ticks_diff < min_delay) min_delay = curr_ticks_diff;
+        sum_delay += curr_ticks_diff;
+      
+        printf("\nRound-trip packets received time diff: %s usec\n", pfring_format_numbers(ticks_to_us(icmp_reached_tick - icmp_round_trip_sended_tick,rte_get_tsc_hz()), buf1, sizeof(buf1), 1));
     }
 
     curr_seq++;
@@ -368,6 +377,16 @@ re_start:
 
 mp_wait:
 	rte_eal_mp_wait_lcore();
+
+  if(packets_received > 0) {
+    const double avg_delay = ((double)sum_delay)/packets_received;
+    printf("\nOne-way Packets received: %d\n", packets_received);
+    printf("One-way Max delay: %s usec\n", pfring_format_numbers(ticks_to_us(max_delay,rte_get_tsc_hz()), buf1, sizeof(buf1), 1));
+    printf("One-way Min delay: %s usec\n", pfring_format_numbers(ticks_to_us(min_delay,rte_get_tsc_hz()), buf1, sizeof(buf1), 1));
+    printf("One-way Avg delay: %s usec\n", pfring_format_numbers(ticks_to_us(avg_delay,rte_get_tsc_hz()), buf1, sizeof(buf1), 1));
+  } else {
+    printf("\nNo packets received => no stats\n");
+  }
 
 	return 0;
 }
