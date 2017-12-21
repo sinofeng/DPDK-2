@@ -370,8 +370,8 @@ re_start:
         if(curr_ticks_diff < min_delay) min_delay = curr_ticks_diff;
         sum_delay += curr_ticks_diff;
 
-        if(ticks_to_us(curr_ticks_diff, rte_get_tsc_hz()) > 200)
-          printf("ping seq %d over 200 us, warnnging packet\n", curr_seq);
+        if(ticks_to_us(curr_ticks_diff, rte_get_tsc_hz()) > 20.0f)
+          printf("ping seq %d reply %f us over 20 us, warnnging packet\n", curr_seq, ticks_to_us(curr_ticks_diff, rte_get_tsc_hz()));
       
         //printf("\nRound-trip packets received time diff: %s usec\n", pfring_format_numbers(ticks_to_us(icmp_reached_tick - icmp_round_trip_sended_tick,rte_get_tsc_hz()), buf1, sizeof(buf1), 1));
     }
