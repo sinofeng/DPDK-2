@@ -225,7 +225,7 @@ main(int argc, char *argv[])
 	int retry = 0, packets_received = 0;
   uint64_t max_delay = 0,min_delay=(uint64_t)-1,sum_delay=0;
 	uint64_t icmp_one_way_sended_tick, curr_ticks_diff;
-	uint64_t icmp_round_trip_sended_tick;
+	//uint64_t icmp_round_trip_sended_tick;
   int icmp_retry = 0;
 
 	for(i=0; i<argc; i++)
@@ -344,7 +344,7 @@ re_start:
 
     icmp_one_way_sended_tick = rte_rdtsc();
     build_icmp_echo_xmit(mbuf_pool, 0, dst_ip, ICMP_ID, curr_seq);
-    icmp_round_trip_sended_tick = rte_rdtsc();
+    //icmp_round_trip_sended_tick = rte_rdtsc();
     icmp_reached = 0;
     icmp_retry = 0;
     
@@ -369,7 +369,7 @@ re_start:
         if(curr_ticks_diff < min_delay) min_delay = curr_ticks_diff;
         sum_delay += curr_ticks_diff;
       
-        printf("\nRound-trip packets received time diff: %s usec\n", pfring_format_numbers(ticks_to_us(icmp_reached_tick - icmp_round_trip_sended_tick,rte_get_tsc_hz()), buf1, sizeof(buf1), 1));
+        //printf("\nRound-trip packets received time diff: %s usec\n", pfring_format_numbers(ticks_to_us(icmp_reached_tick - icmp_round_trip_sended_tick,rte_get_tsc_hz()), buf1, sizeof(buf1), 1));
     }
 
     curr_seq++;
@@ -377,11 +377,27 @@ re_start:
 	}
 
   if(packets_received > 0) {
+    struct rte_eth_stats stats;
+  
     const double avg_delay = ((double)sum_delay)/packets_received;
     printf("\nOne-way Packets received: %d\n", packets_received);
     printf("One-way Max delay: %s usec\n", pfring_format_numbers(ticks_to_us(max_delay,rte_get_tsc_hz()), buf1, sizeof(buf1), 1));
     printf("One-way Min delay: %s usec\n", pfring_format_numbers(ticks_to_us(min_delay,rte_get_tsc_hz()), buf1, sizeof(buf1), 1));
     printf("One-way Avg delay: %s usec\n", pfring_format_numbers(ticks_to_us(avg_delay,rte_get_tsc_hz()), buf1, sizeof(buf1), 1));
+
+  	for (i = 0; i < rte_eth_dev_count(); i++) {
+  		rte_eth_stats_get(i, &stats);
+  		
+  		printf("  RX-packets:              %10"PRIu64"    RX-errors: %10"PRIu64
+  		       "    RX-bytes: %10"PRIu64"\n",
+  		       stats.ipackets, stats.ierrors, stats.ibytes);
+  		printf("  RX-errors:  %10"PRIu64"\n", stats.ierrors);
+  		printf("  RX-nombuf:               %10"PRIu64"\n",
+  		       stats.rx_nombuf);
+  		printf("  TX-packets:              %10"PRIu64"    TX-errors: %10"PRIu64
+  		       "    TX-bytes: %10"PRIu64"\n",
+  		       stats.opackets, stats.oerrors, stats.obytes);
+  	}
   } else {
     printf("\nNo packets received => no stats\n");
   }
