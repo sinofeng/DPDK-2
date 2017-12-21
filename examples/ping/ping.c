@@ -279,6 +279,11 @@ main(int argc, char *argv[])
 			exit(0);
 	}
 
+	if(send_port > (nb_ports-1)) {
+			printf("port out of range\n");
+			exit(0);
+	}
+
 	/* Initialize all ports. */
 	for (portid = 0; portid < nb_ports; portid++)
 		if (port_init(portid, mbuf_pool) != 0)
