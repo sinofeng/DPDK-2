@@ -53,6 +53,7 @@
 uint32_t dst_ip = 0;
 uint32_t nic_ip = 0;
 static struct rte_mempool *mbuf_pool;
+uint32_t send_port = 0;
 
 static const struct rte_eth_conf port_conf_default = {
 	.rxmode = { .max_rx_pkt_len = ETHER_MAX_LEN }
@@ -221,7 +222,7 @@ main(int argc, char *argv[])
 	unsigned nb_ports;
 	uint8_t portid, i;
 	int max_ping_times = 3;
-	char *local, *dst, *times, buf1[64];
+	char *p, buf1[64];
 	int retry = 0, packets_received = 0;
   uint64_t max_delay = 0,min_delay=(uint64_t)-1,sum_delay=0;
 	uint64_t icmp_one_way_sended_tick, curr_ticks_diff;
@@ -230,30 +231,30 @@ main(int argc, char *argv[])
 
 	for(i=0; i<argc; i++)
 	{
-		local = strstr(argv[i], "local=");
-		if(local) {
-				nic_ip = rte_inet_addr(local+strlen("local="));
-				break;
+		p = strstr(argv[i], "local=");
+		if(p) {
+				nic_ip = rte_inet_addr(p+strlen("local="));
+				continue;
+		}
+
+		p = strstr(argv[i], "dest=");
+		if(p ) {
+				dst_ip = rte_inet_addr(p +strlen("dest="));
+				continue;
+		}
+
+		p = strstr(argv[i], "times=");
+		if(p) {
+				max_ping_times = atoi(p+strlen("times="));
+				continue;
+		}
+
+		p = strstr(argv[i], "sport=");
+		if(p) {
+				send_port = atoi(p+strlen("sport="));
+				continue;
 		}
 	}
-
-	for(i=0; i<argc; i++)
-	{
-		dst = strstr(argv[i], "dest=");
-		if(dst) {
-				dst_ip = rte_inet_addr(dst+strlen("dest="));
-				break;
-		}
-	}
-
-	for(i=0; i<argc; i++)
-	{
-		times = strstr(argv[i], "times=");
-		if(times) {
-				max_ping_times = atoi(times+strlen("times="));
-				break;
-		}
-	}	
 
 	/* Initialize the Environment Abstraction Layer (EAL). */
 	int ret = rte_eal_init(argc, argv);
@@ -322,7 +323,7 @@ re_start:
     }
 
     if(!memcmp(&dst_addr, &null_addr, ETHER_ADDR_LEN)) {
-        build_arp_echo_xmit(mbuf_pool, 0, dst_ip);
+        build_arp_echo_xmit(mbuf_pool, send_port, dst_ip);
 
         int arp_retry = 0;
         while(arp_retry < 30) {
@@ -343,7 +344,7 @@ re_start:
     }
 
     icmp_one_way_sended_tick = rte_rdtsc();
-    build_icmp_echo_xmit(mbuf_pool, 0, dst_ip, ICMP_ID, curr_seq);
+    build_icmp_echo_xmit(mbuf_pool, send_port, dst_ip, ICMP_ID, curr_seq);
     //icmp_round_trip_sended_tick = rte_rdtsc();
     icmp_reached = 0;
     icmp_retry = 0;
@@ -359,7 +360,7 @@ re_start:
 
     if(icmp_retry == 300)
     {
-        printf("ping timeout no icmp reply\n");
+        printf("ping seq %d timeout no icmp reply\n", curr_seq);
     }
     else
     {
@@ -368,6 +369,9 @@ re_start:
         if(curr_ticks_diff > max_delay) max_delay = curr_ticks_diff;
         if(curr_ticks_diff < min_delay) min_delay = curr_ticks_diff;
         sum_delay += curr_ticks_diff;
+
+        if(ticks_to_us(curr_ticks_diff, rte_get_tsc_hz()) > 200)
+          printf("ping seq %d over 200 us, warnnging packet\n", curr_seq);
       
         //printf("\nRound-trip packets received time diff: %s usec\n", pfring_format_numbers(ticks_to_us(icmp_reached_tick - icmp_round_trip_sended_tick,rte_get_tsc_hz()), buf1, sizeof(buf1), 1));
     }
