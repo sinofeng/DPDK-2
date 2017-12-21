@@ -72,12 +72,6 @@
 #define IP_HDRLEN  0x05 /* default IP header length == five 32-bits words. */
 #define IP_VHL_DEF (IP_VERSION | IP_HDRLEN)
 
-#define BURST_TX_WAIT_US 1
-#define BURST_TX_RETRIES 64
-
-uint32_t burst_tx_delay_time = BURST_TX_WAIT_US;
-uint32_t burst_tx_retry_num = BURST_TX_RETRIES;
-
 #define RTE_BE_TO_CPU_16(be_16_v)  rte_be_to_cpu_16((be_16_v))
 #define RTE_CPU_TO_BE_16(cpu_16_v) rte_cpu_to_be_16((cpu_16_v))
 
@@ -350,10 +344,9 @@ void build_arp_echo_xmit(struct rte_mempool *pool, uint8_t port, uint32_t dest_i
 	struct rte_mbuf *created_pkt;
 	struct ether_hdr *eth_hdr;
 	struct arp_hdr *arp_hdr;
-  int nb_tx;
+
 	size_t pkt_size;
-  uint32_t retry;
-  
+
 	created_pkt = rte_pktmbuf_alloc(pool);
 	pkt_size = sizeof(struct ether_hdr) + sizeof(struct arp_hdr);
 	created_pkt->data_len = pkt_size;
@@ -375,20 +368,7 @@ void build_arp_echo_xmit(struct rte_mempool *pool, uint8_t port, uint32_t dest_i
 	arp_hdr->arp_data.arp_sip = nic_ip;
 	memset(&arp_hdr->arp_data.arp_tha, 0, ETHER_ADDR_LEN);
 	arp_hdr->arp_data.arp_tip = dest_ip;
-	nb_tx = rte_eth_tx_burst(port, 0, &created_pkt, 1);
-
-  if (unlikely(nb_tx != 1)) {
-    retry = 0;
-    while(nb_tx != 1 && 
-      retry++ < burst_tx_retry_num) {
-      rte_delay_us(burst_tx_delay_time);
-      nb_tx = rte_eth_tx_burst(port, 0, &created_pkt, 1);
-    }
-    
-    if (unlikely(nb_tx != 1)) {
-      rte_pktmbuf_free(created_pkt);
-    }
-  }
+	rte_eth_tx_burst(port, 0, &created_pkt, 1);
 }
 
 void build_icmp_echo_xmit(struct rte_mempool *pool, uint8_t port, uint32_t dest_ip, uint16_t id, uint16_t seq) 
@@ -399,8 +379,6 @@ void build_icmp_echo_xmit(struct rte_mempool *pool, uint8_t port, uint32_t dest_
 	struct icmp_hdr *icmp_hdr;
 	struct timeval *tval;
 	char *data;
-  int nb_tx;
-  uint32_t retry;
 
 	size_t pkt_size;
 	size_t ip_totol_len = sizeof(struct ipv4_hdr) + sizeof(struct icmp_hdr) + 8 + 27;
@@ -442,20 +420,7 @@ void build_icmp_echo_xmit(struct rte_mempool *pool, uint8_t port, uint32_t dest_
 	memcpy(data, "abcdefghijklmnopgrstuvwxyz", 26);
 	data[26] = '\0';
 	icmp_hdr->icmp_cksum = wrapsum(in_cksum((unsigned char *)icmp_hdr, sizeof(struct icmp_hdr)+8+27, 0));
-	nb_tx = rte_eth_tx_burst(port, 0, &created_pkt, 1);
-
-  if (unlikely(nb_tx != 1)) {
-    retry = 0;
-    while(nb_tx != 1 && 
-      retry++ < burst_tx_retry_num) {
-      rte_delay_us(burst_tx_delay_time);
-      nb_tx = rte_eth_tx_burst(port, 0, &created_pkt, 1);
-    }
-    
-    if (unlikely(nb_tx != 1)) {
-      rte_pktmbuf_free(created_pkt);
-    }
-  }
+	rte_eth_tx_burst(port, 0, &created_pkt, 1);
 }
 
 /*
@@ -475,7 +440,7 @@ arp_icmp_process(uint8_t port)
 	struct ether_addr eth_addr;
 	uint32_t ip_addr;
 	uint16_t nb_rx;
-	uint16_t nb_tx, retry;
+	uint16_t nb_tx;
 	uint16_t nb_replies;
 	uint16_t eth_type;
 #ifdef DEBUG
@@ -603,6 +568,7 @@ arp_icmp_process(uint8_t port)
 			rte_pktmbuf_free(pkt);
 			continue;
 		}
+
 		ip_h = (struct ipv4_hdr *) ((char *)eth_h + l2_len);
 		#ifdef DEBUG
 			ipv4_addr_dump("  IPV4: src=", ip_h->src_addr);
@@ -692,19 +658,6 @@ arp_icmp_process(uint8_t port)
 	if (nb_replies > 0) {
 		nb_tx = rte_eth_tx_burst(port, 0, pkts_burst,
 					 nb_replies);
-
-		/*
-		 * Retry if necessary
-		 */
-		if (unlikely(nb_tx < nb_replies)) {
-		  retry = 0;
-			while (nb_tx < nb_replies &&
-			  retry++ < burst_tx_retry_num) {
-				rte_delay_us(burst_tx_delay_time);
-				nb_tx += rte_eth_tx_burst(port, 0, &pkts_burst[nb_tx],
-						nb_replies - nb_tx);
-			}
-    	}
 
 		if (unlikely(nb_tx < nb_replies)) {
 			do {
