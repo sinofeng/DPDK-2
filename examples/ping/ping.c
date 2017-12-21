@@ -391,7 +391,7 @@ re_start:
 
   	for (i = 0; i < rte_eth_dev_count(); i++) {
   		rte_eth_stats_get(i, &stats);
-  		
+  		printf("\nPort %d:\n", i);
   		printf("  RX-packets:              %10"PRIu64"    RX-errors: %10"PRIu64
   		       "    RX-bytes: %10"PRIu64"\n",
   		       stats.ipackets, stats.ierrors, stats.ibytes);
