@@ -348,7 +348,7 @@ re_start:
     icmp_reached = 0;
     icmp_retry = 0;
     
-    while(icmp_retry < 30) {
+    while(icmp_retry < 300) {
 
         if(icmp_reached)
             break;
@@ -357,7 +357,7 @@ re_start:
         icmp_retry++;
     }
 
-    if(icmp_retry == 30)
+    if(icmp_retry == 300)
     {
         printf("ping timeout no icmp reply\n");
     }
