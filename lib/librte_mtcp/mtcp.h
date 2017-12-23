@@ -7,6 +7,14 @@
 #include <sys/queue.h>
 #include <pthread.h>
 
+#ifndef LOCK_STREAM_QUEUE
+#define LOCK_STREAM_QUEUE	FALSE
+#endif
+
+#ifndef USE_SPIN_LOCK
+#define USE_SPIN_LOCK		TRUE
+#endif
+
 #include "memory_mgt.h"
 #include "tcp_ring_buffer.h"
 #include "tcp_send_buffer.h"
@@ -45,8 +53,6 @@
 #define TCP_OPT_TIMESTAMP_ENABLED   TRUE	/* enabled for rtt measure */
 #define TCP_OPT_SACK_ENABLED        FALSE	/* not implemented */
 
-#define LOCK_STREAM_QUEUE	FALSE
-#define USE_SPIN_LOCK		TRUE
 #define INTR_SLEEPING_MTCP	TRUE
 #define PROMISCUOUS_MODE	TRUE
 
@@ -56,6 +62,11 @@
 #ifndef MAX_CPUS
 #define MAX_CPUS		16
 #endif
+
+#ifndef ETH_ALEN
+#define ETH_ALEN 6
+#endif
+
 /*----------------------------------------------------------------------------*/
 /* Statistics */
 #ifdef NETSTAT

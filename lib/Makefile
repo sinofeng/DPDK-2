@@ -113,5 +113,7 @@ ifeq ($(CONFIG_RTE_EXEC_ENV_LINUXAPP),y)
 DIRS-$(CONFIG_RTE_LIBRTE_KNI) += librte_kni
 endif
 DEPDIRS-librte_kni:= librte_eal librte_mempool librte_mbuf librte_ether
+DIRS-y += librte_mtcp
+DIRS-y += librte_util
 
 include $(RTE_SDK)/mk/rte.subdir.mk

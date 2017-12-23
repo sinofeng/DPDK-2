@@ -93,10 +93,8 @@ EnrollRouteTableEntry(char *optstr)
 {
 	char *daddr_s;
 	char *prefix;
-#ifdef DISABLE_NETMAP 
 	char *dev;
 	int i;
-#endif
 	int ifidx;
 	int ridx;
 	char *saveptr;
@@ -104,39 +102,18 @@ EnrollRouteTableEntry(char *optstr)
 	saveptr = NULL;
 	daddr_s = strtok_r(optstr, "/", &saveptr);
 	prefix = strtok_r(NULL, " ", &saveptr);
-#ifdef DISABLE_NETMAP
 	dev = strtok_r(NULL, "\n", &saveptr);
-#endif
 	assert(daddr_s != NULL);
 	assert(prefix != NULL);
-#ifdef DISABLE_NETMAP	
 	assert(dev != NULL);
-#endif
 
 	ifidx = -1;
-	if (current_iomodule_func == &ps_module_func) {
-#ifndef DISABLE_PSIO		
-		for (i = 0; i < num_devices; i++) {
-			if (strcmp(dev, devices[i].name) != 0)
-				continue;
-			
-			ifidx = devices[i].ifindex;
-			break;
-		}
-		if (ifidx == -1) {
-			TRACE_CONFIG("Interface %s does not exist!\n", dev);
-			exit(4);
-		}
-#endif
-	} else if (current_iomodule_func == &dpdk_module_func) {
-#ifndef DISABLE_DPDK
-		for (i = 0; i < num_devices; i++) {
-			if (strcmp(CONFIG.eths[i].dev_name, dev))
-				continue;
-			ifidx = CONFIG.eths[i].ifindex;
-			break;
-		}
-#endif
+
+	for (i = 0; i < num_devices; i++) {
+		if (strcmp(CONFIG.eths[i].dev_name, dev))
+			continue;
+		ifidx = CONFIG.eths[i].ifindex;
+		break;
 	}
 
 	ridx = CONFIG.routes++;

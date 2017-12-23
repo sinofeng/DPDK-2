@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdarg.h>
+#include "ps.h"
 #include "debug.h"
 #include "tcp_in.h"
 #include "logger.h"

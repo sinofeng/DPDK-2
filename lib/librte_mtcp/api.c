@@ -1289,12 +1289,6 @@ mtcp_recv(mctx_t mctx, int sockid, char *buf, size_t len, int flags)
         return ret;
 }
 /*----------------------------------------------------------------------------*/
-inline ssize_t
-mtcp_read(mctx_t mctx, int sockid, char *buf, size_t len)
-{
-	return mtcp_recv(mctx, sockid, buf, len, 0);
-}
-/*----------------------------------------------------------------------------*/
 int
 mtcp_readv(mctx_t mctx, int sockid, const struct iovec *iov, int numIOV)
 {

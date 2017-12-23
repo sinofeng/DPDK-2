@@ -124,15 +124,18 @@ int
 mtcp_getpeername(mctx_t mctx, int sockid, struct sockaddr *addr,
 		 socklen_t *addrlen);
 
-inline ssize_t
-mtcp_read(mctx_t mctx, int sockid, char *buf, size_t len);
-
 ssize_t
 mtcp_recv(mctx_t mctx, int sockid, char *buf, size_t len, int flags);
 
 /* readv should work in atomic */
 int
 mtcp_readv(mctx_t mctx, int sockid, const struct iovec *iov, int numIOV);
+
+static inline ssize_t
+mtcp_read(mctx_t mctx, int sockid, char *buf, size_t len)
+{
+	return mtcp_recv(mctx, sockid, buf, len, 0);
+}
 
 ssize_t
 mtcp_write(mctx_t mctx, int sockid, const char *buf, size_t len);

@@ -1,6 +1,5 @@
 /* for io_module_func def'ns */
 #include "io_module.h"
-#ifndef DISABLE_DPDK
 /* for mtcp related def'ns */
 #include "mtcp.h"
 /* for errno */
@@ -778,22 +777,6 @@ dpdk_dev_ioctl(struct mtcp_thread_context *ctx, int nif, int cmd, void *argp)
 	len_of_mbuf = dpc->wmbufs[eidx].len;
 
 	switch (cmd) {
-	case PKT_TX_IP_CSUM:
-		if ((dev_info[nif].tx_offload_capa & DEV_TX_OFFLOAD_IPV4_CKSUM) == 0)
-			goto dev_ioctl_err;
-		m = dpc->wmbufs[eidx].m_table[len_of_mbuf - 1];
-		m->ol_flags = PKT_TX_IP_CKSUM | PKT_TX_IPV4;
-		m->l2_len = sizeof(struct ether_hdr);
-		m->l3_len = (iph->ihl<<2);
-		break;
-	case PKT_TX_TCP_CSUM:
-		if ((dev_info[nif].tx_offload_capa & DEV_TX_OFFLOAD_TCP_CKSUM) == 0)
-			goto dev_ioctl_err;
-		m = dpc->wmbufs[eidx].m_table[len_of_mbuf - 1];
-		tcph = (struct tcphdr *)((unsigned char *)iph + (iph->ihl<<2));
-		m->ol_flags |= PKT_TX_TCP_CKSUM;
-		tcph->check = rte_ipv4_phdr_cksum((struct ipv4_hdr *)iph, m->ol_flags);
-		break;
 #ifdef ENABLELRO
 	case PKT_RX_TCP_LROSEG:
 		m = dpc->cur_rx_m;
@@ -821,34 +804,6 @@ dpdk_dev_ioctl(struct mtcp_thread_context *ctx, int nif, int cmd, void *argp)
 		}
 		break;
 #endif
-	case PKT_TX_TCPIP_CSUM:
-		if ((dev_info[nif].tx_offload_capa & DEV_TX_OFFLOAD_IPV4_CKSUM) == 0)
-			goto dev_ioctl_err;
-		if ((dev_info[nif].tx_offload_capa & DEV_TX_OFFLOAD_TCP_CKSUM) == 0)
-			goto dev_ioctl_err;
-		m = dpc->wmbufs[eidx].m_table[len_of_mbuf - 1];
-		iph = rte_pktmbuf_mtod_offset(m, struct iphdr *, sizeof(struct ether_hdr));
-		tcph = (struct tcphdr *)((uint8_t *)iph + (iph->ihl<<2));
-		m->l2_len = sizeof(struct ether_hdr);
-		m->l3_len = (iph->ihl<<2);
-		m->l4_len = (tcph->doff<<2);
-		m->ol_flags = PKT_TX_TCP_CKSUM | PKT_TX_IP_CKSUM | PKT_TX_IPV4;
-		tcph->check = rte_ipv4_phdr_cksum((struct ipv4_hdr *)iph, m->ol_flags);
-		break;
-	case PKT_RX_IP_CSUM:
-		if ((dev_info[nif].rx_offload_capa & DEV_RX_OFFLOAD_IPV4_CKSUM) == 0)
-			goto dev_ioctl_err;
-		break;
-	case PKT_RX_TCP_CSUM:
-		if ((dev_info[nif].rx_offload_capa & DEV_RX_OFFLOAD_TCP_CKSUM) == 0)
-			goto dev_ioctl_err;
-		break;
-	case PKT_TX_TCPIP_CSUM_PEEK:
-		if ((dev_info[nif].tx_offload_capa & DEV_TX_OFFLOAD_IPV4_CKSUM) == 0)
-			goto dev_ioctl_err;
-		if ((dev_info[nif].tx_offload_capa & DEV_TX_OFFLOAD_TCP_CKSUM) == 0)
-			goto dev_ioctl_err;
-		break;
 	default:
 		goto dev_ioctl_err;
 	}
@@ -871,19 +826,3 @@ io_module_func dpdk_module_func = {
 	.dev_ioctl		   = dpdk_dev_ioctl
 };
 /*----------------------------------------------------------------------------*/
-#else
-io_module_func dpdk_module_func = {
-	.load_module		   = NULL,
-	.init_handle		   = NULL,
-	.link_devices		   = NULL,
-	.release_pkt		   = NULL,
-	.send_pkts		   = NULL,
-	.get_wptr   		   = NULL,
-	.recv_pkts		   = NULL,
-	.get_rptr	   	   = NULL,
-	.select			   = NULL,
-	.destroy_handle		   = NULL,
-	.dev_ioctl		   = NULL
-};
-/*----------------------------------------------------------------------------*/
-#endif /* !DISABLE_DPDK */

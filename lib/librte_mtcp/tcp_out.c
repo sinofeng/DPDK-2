@@ -199,13 +199,6 @@ SendTCPPacketStandalone(struct mtcp_manager *mtcp,
 	}
 		
 #if TCP_CALCULATE_CHECKSUM
-#ifndef DISABLE_HWCSUM
-	uint8_t is_external;
-	if (mtcp->iom->dev_ioctl != NULL)
-		rc = mtcp->iom->dev_ioctl(mtcp->ctx, GetOutputInterface(daddr, &is_external),
-					  PKT_TX_TCPIP_CSUM, NULL);
-	UNUSED(is_external);
-#endif
 	if (rc == -1)
 		tcph->check = TCPCalcChecksum((uint16_t *)tcph, 
 					      TCP_HEADER_LEN + optlen + payloadlen,
@@ -320,11 +313,6 @@ SendTCPPacket(struct mtcp_manager *mtcp, tcp_stream *cur_stream,
 	}
 
 #if TCP_CALCULATE_CHECKSUM
-#ifndef DISABLE_HWCSUM
-	if (mtcp->iom->dev_ioctl != NULL)
-		rc = mtcp->iom->dev_ioctl(mtcp->ctx, cur_stream->sndvar->nif_out,
-					  PKT_TX_TCPIP_CSUM, NULL);
-#endif
 	if (rc == -1)
 		tcph->check = TCPCalcChecksum((uint16_t *)tcph, 
 					      TCP_HEADER_LEN + optlen + payloadlen, 

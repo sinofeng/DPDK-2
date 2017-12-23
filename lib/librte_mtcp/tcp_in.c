@@ -1157,11 +1157,6 @@ ProcessTCPPacket(mtcp_manager_t mtcp,
 		return ERROR;
 
 #if VERIFY_RX_CHECKSUM
-#ifndef DISABLE_HWCSUM
-	if (mtcp->iom->dev_ioctl != NULL)
-		rc = mtcp->iom->dev_ioctl(mtcp->ctx, ifidx,
-					  PKT_RX_TCP_CSUM, NULL);
-#endif
 	if (rc == -1) {
 		check = TCPCalcChecksum((uint16_t *)tcph, 
 					(tcph->doff << 2) + payloadlen, iph->saddr, iph->daddr);
