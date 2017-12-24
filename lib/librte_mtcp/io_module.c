@@ -105,83 +105,27 @@ SetInterfaceInfo(char* dev_name_list)
 		}
 
 		/* get mac addr entries of 'detected' dpdk ports */
-		for (ret = 0; ret < num_devices; ret++)
+		for (ret = 0; ret < num_devices; ret++) {
 			rte_eth_macaddr_get(ret, &ports_eth_addr[ret]);
 
-		num_queues = MIN(CONFIG.num_cores, MAX_CPUS);
+			snprintf(CONFIG.eths[ret].dev_name, sizeof(CONFIG.eths[0].dev_name), "dpdk%d", ret);
+			CONFIG.eths[ret].ifindex = ret;
+			CONFIG.eths[ret].stat_print = 1;
+			memcpy(CONFIG.eths[ret].haddr, &ports_eth_addr[ret], ETH_ALEN);
+			CONFIG.eths[ret].netmask = htonl(0xffffff00);
+			CONFIG.eths[ret].ip_addr = htonl(0xc0a8de00 + ports_eth_addr[ret].addr_bytes[5]);
 
-		struct ifaddrs *ifap;
-		struct ifaddrs *iter_if;
-		char *seek;
-
-		if (getifaddrs(&ifap) != 0) {
-			perror("getifaddrs: ");
-			exit(EXIT_FAILURE);
+			CONFIG.eths_num++;
+			devices_attached[ret] = ret;
+			num_devices_attached++;
+			printf("Port %d ip %d.%d.%d.%d\n", ret, 
+						CONFIG.eths[ret].ip_addr & 0xFF, 
+						CONFIG.eths[ret].ip_addr >> 8 & 0xFF, 
+						CONFIG.eths[ret].ip_addr >> 16 & 0xFF, 
+						CONFIG.eths[ret].ip_addr >> 24 & 0xFF);
 		}
 
-		iter_if = ifap;
-		do {
-			if (iter_if->ifa_addr->sa_family == AF_INET &&
-			    !set_all_inf &&
-			    (seek=strstr(dev_name_list, iter_if->ifa_name)) != NULL &&
-			    /* check if the interface was not aliased */
-			    *(seek + strlen(iter_if->ifa_name)) != ':') {
-				struct ifreq ifr;
-
-				/* Setting informations */
-				eidx = CONFIG.eths_num++;
-				strcpy(CONFIG.eths[eidx].dev_name, iter_if->ifa_name);
-				strcpy(ifr.ifr_name, iter_if->ifa_name);
-
-				/* Create socket */
-				int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
-				if (sock == -1) {
-					perror("socket");
-					exit(EXIT_FAILURE);
-				}
-
-				/* getting address */
-				if (ioctl(sock, SIOCGIFADDR, &ifr) == 0 ) {
-					struct in_addr sin = ((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr;
-					CONFIG.eths[eidx].ip_addr = *(uint32_t *)&sin;
-				}
-
-				if (ioctl(sock, SIOCGIFHWADDR, &ifr) == 0 ) {
-					for (j = 0; j < ETH_ALEN; j ++) {
-						CONFIG.eths[eidx].haddr[j] = ifr.ifr_addr.sa_data[j];
-					}
-				}
-
-				/* Net MASK */
-				if (ioctl(sock, SIOCGIFNETMASK, &ifr) == 0) {
-					struct in_addr sin = ((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr;
-					CONFIG.eths[eidx].netmask = *(uint32_t *)&sin;
-				}
-				close(sock);
-
-				for (j = 0; j < num_devices; j++) {
-					if (!memcmp(&CONFIG.eths[eidx].haddr[0], &ports_eth_addr[j],
-						    ETH_ALEN))
-						CONFIG.eths[eidx].ifindex = j;
-				}
-
-				/* add to attached devices */
-				for (j = 0; j < num_devices_attached; j++) {
-					if (devices_attached[j] == CONFIG.eths[eidx].ifindex) {
-						break;
-					}
-				}
-				devices_attached[num_devices_attached] = CONFIG.eths[eidx].ifindex;
-				num_devices_attached++;
-				fprintf(stderr, "Total number of attached devices: %d\n",
-					num_devices_attached);
-				fprintf(stderr, "Interface name: %s\n",
-					iter_if->ifa_name);
-			}
-			iter_if = iter_if->ifa_next;
-		} while (iter_if != NULL);
-
-		freeifaddrs(ifap);
+		num_queues = MIN(CONFIG.num_cores, MAX_CPUS);
 	}
 
 	CONFIG.nif_to_eidx = (int*)calloc(MAX_DEVICES, sizeof(int));
