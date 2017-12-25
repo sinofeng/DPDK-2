@@ -325,6 +325,7 @@ HandleReadEvent(thread_context_t ctx, int sockid, struct wget_vars *wv)
 	char buf[BUF_SIZE];
 	char *pbuf;
 	int rd, copy_len;
+	mtcp_manager_t mtcp = GetMTCPManager(mctx);
 
 	rd = 1;
 	while (rd > 0) {
@@ -543,6 +544,7 @@ RunWgetMain(void *arg)
 	struct mtcp_epoll_event *events;
 	int nevents;
 	struct wget_vars *wvars;
+	mtcp_manager_t mtcp = GetMTCPManager(mctx);	
 	int i;
 
 	struct timeval cur_tv, prev_tv;
