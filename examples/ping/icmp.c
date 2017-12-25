@@ -429,7 +429,7 @@ void build_icmp_echo_xmit(struct rte_mempool *pool, uint8_t port, uint32_t dest_
   uint32_t retry;
 
 	size_t pkt_size;
-	size_t ip_totol_len = sizeof(struct ipv4_hdr) + sizeof(struct icmp_hdr) + 8 + 27;
+	size_t ip_totol_len = sizeof(struct ipv4_hdr) + sizeof(struct icmp_hdr) + 8 + 28;
 
 	created_pkt = rte_pktmbuf_alloc(pool);
 	pkt_size = sizeof(struct ether_hdr) + ip_totol_len;
