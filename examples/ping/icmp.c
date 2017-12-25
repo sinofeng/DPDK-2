@@ -345,6 +345,32 @@ static uint32_t wrapsum (uint32_t sum) {
   return rte_cpu_to_be_16(sum);
 }
 
+static unsigned short cal_chksum(unsigned short *addr,int len)
+{       
+	int nleft=len;
+	int sum=0;
+	unsigned short *w=addr;
+	unsigned short answer=0;
+
+	while(nleft>1)
+	{       
+		sum+=*w++;
+		nleft-=2;
+	}
+
+	if( nleft==1)
+	{       
+		*(unsigned char *)(&answer)=*(unsigned char *)w;
+		sum+=answer;
+	}
+
+	sum=(sum>>16)+(sum&0xffff);
+	sum+=(sum>>16);
+	answer=~sum;
+	return answer;
+}
+
+
 void build_arp_echo_xmit(struct rte_mempool *pool, uint8_t port, uint32_t dest_ip) 
 {
 	struct rte_mbuf *created_pkt;
@@ -424,8 +450,8 @@ void build_icmp_echo_xmit(struct rte_mempool *pool, uint8_t port, uint32_t dest_
 	ip_hdr->time_to_live	= IP_DEFTTL;
 	ip_hdr->next_proto_id = IPPROTO_ICMP;
 	ip_hdr->packet_id = 0;
-	ip_hdr->src_addr	= rte_cpu_to_be_32(nic_ip);
-	ip_hdr->dst_addr	= rte_cpu_to_be_32(dest_ip);
+	ip_hdr->src_addr	= nic_ip;
+	ip_hdr->dst_addr	= dest_ip;
 	ip_hdr->total_length	= RTE_CPU_TO_BE_16(ip_totol_len);
 	ip_hdr->hdr_checksum	= wrapsum(in_cksum((unsigned char *)ip_hdr, sizeof(*ip_hdr), 0));
 	
@@ -439,9 +465,10 @@ void build_icmp_echo_xmit(struct rte_mempool *pool, uint8_t port, uint32_t dest_
 	icmp_hdr->icmp_ident = RTE_CPU_TO_BE_16(id);
 	icmp_hdr->icmp_seq_nb = RTE_CPU_TO_BE_16(seq);
 	gettimeofday(tval, NULL);
-	memcpy(data, "abcdefghijklmnopgrstuvwxyz", 26);
+	memcpy(data, "abcdefghijklmnopgrstuvwxyz0", 27);
 	data[26] = '\0';
-	icmp_hdr->icmp_cksum = wrapsum(in_cksum((unsigned char *)icmp_hdr, sizeof(struct icmp_hdr)+8+27, 0));
+	data[27] = '\0';
+	icmp_hdr->icmp_cksum = cal_chksum((unsigned short *)icmp_hdr, sizeof(struct icmp_hdr)+8+28);
 	nb_tx = rte_eth_tx_burst(port, 0, &created_pkt, 1);
 
   if (unlikely(nb_tx != 1)) {
