@@ -116,4 +116,10 @@ DEPDIRS-librte_kni:= librte_eal librte_mempool librte_mbuf librte_ether
 DIRS-y += librte_mtcp
 DIRS-y += librte_util
 
+DIRS-y += libtle_misc
+DIRS-y += libtle_dring
+DIRS-y += libtle_timer
+DIRS-y += libtle_l4p
+
+
 include $(RTE_SDK)/mk/rte.subdir.mk

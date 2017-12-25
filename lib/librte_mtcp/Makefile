@@ -80,14 +80,12 @@ SRCS-y += tcp_util.c
 
 
 # install includes
-INCS := addr_pool.h cpu.h eth_out.h ip_in.h ps.h
-INCS += memory_mgt.h mtcp.h rss.h tcp_in.h tcp_ring_buffer.h tcp_stream.h timer.h
-INCS += arp.h debug.h eventpoll.h icmp.h ip_out.h mtcp_api.h
-INCS += socket.h tcp_out.h tcp_sb_queue.h tcp_stream_queue.h
-INCS += config.h eth_in.h fhash.h io_module.h logger.h
-INCS += mtcp_epoll.h pipe.h stat.h tcp_rb_frag_queue.h tcp_send_buffer.h tcp_util.h
-
-SYMLINK-$(CONFIG_RTE_LIBRTE_CMDLINE)-include := $(INCS)
+SYMLINK-y-include += addr_pool.h cpu.h eth_out.h ip_in.h ps.h
+SYMLINK-y-include += memory_mgt.h mtcp.h rss.h tcp_in.h tcp_ring_buffer.h tcp_stream.h timer.h
+SYMLINK-y-include += arp.h debug.h eventpoll.h icmp.h ip_out.h mtcp_api.h
+SYMLINK-y-include += socket.h tcp_out.h tcp_sb_queue.h tcp_stream_queue.h
+SYMLINK-y-include += config.h eth_in.h fhash.h io_module.h logger.h
+SYMLINK-y-include += mtcp_epoll.h pipe.h stat.h tcp_rb_frag_queue.h tcp_send_buffer.h tcp_util.h
 
 # install includes
 #SYMLINK-y-include += rte_mtcp.h

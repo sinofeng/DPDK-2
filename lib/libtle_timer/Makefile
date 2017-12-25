@@ -35,4 +35,4 @@ SRCS-y += timer.c
 
 SYMLINK-y-include += tle_timer.h
 
-include $(TLDK_ROOT)/mk/tle.lib.mk
+include $(RTE_SDK)/mk/rte.lib.mk

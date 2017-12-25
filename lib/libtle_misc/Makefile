@@ -32,4 +32,4 @@ LIBABIVER := 1
 
 SYMLINK-y-include += tle_dpdk_wrapper.h
 
-include $(TLDK_ROOT)/mk/tle.lib.mk
+include $(RTE_SDK)/mk/rte.lib.mk

@@ -51,9 +51,7 @@ SRCS-y += netlib.c
 SRCS-y += tdate_parse.c
 
 # install includes
-INCS := http_parsing.h netlib.h tdate_parse.h
-
-SYMLINK-$(CONFIG_RTE_LIBRTE_CMDLINE)-include := $(INCS)
+SYMLINK-y-include += http_parsing.h netlib.h tdate_parse.h
 
 # install includes
 #SYMLINK-y-include += rte_mtcp.h

@@ -51,4 +51,4 @@ DEPDIRS-y += lib/libtle_misc
 DEPDIRS-y += lib/libtle_dring
 DEPDIRS-y += lib/libtle_timer
 
-include $(TLDK_ROOT)/mk/tle.lib.mk
+include $(RTE_SDK)/mk/rte.lib.mk
