@@ -87,6 +87,7 @@ DIRS-y += skeleton
 DIRS-y += ping
 DIRS-y += epwget
 DIRS-y += epserver
+DIRS-y += echo
 ifeq ($(CONFIG_RTE_LIBRTE_HASH),y)
 DIRS-$(CONFIG_RTE_LIBRTE_VHOST) += tep_termination
 endif
