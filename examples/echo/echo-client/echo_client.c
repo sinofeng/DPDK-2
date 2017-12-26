@@ -93,8 +93,7 @@ int main (int argc, char *argv[]) {
 	int retry = 0, packets_received = 0;
 
   num_cores = GetNumCPUs();
-  core_limit = num_cores;    
-	mtcp_register_signal(SIGINT, SignalHandler);
+  core_limit = num_cores;
 
   while (-1 != (o = getopt(argc, argv, "N:f:C:"))) {
     switch(o) {
@@ -137,6 +136,7 @@ int main (int argc, char *argv[]) {
     exit(-1);
   }
   
+	mtcp_register_signal(SIGINT, SignalHandler);
   mtcp_core_affinitize(0);
   mctx = mtcp_create_context(0);
   sockid = mtcp_socket(mctx, AF_INET, SOCK_STREAM, 0);

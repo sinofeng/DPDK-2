@@ -85,7 +85,9 @@ int main (int argc, char *argv[]) {
     on_error("Failed to initialize mtcp.\n");
     exit(-1);
   }
-  
+
+	mtcp_register_signal(SIGINT, SignalHandler);
+
   mtcp_core_affinitize(0);
   mctx = mtcp_create_context(0);
   server_fd = mtcp_socket(mctx, AF_INET, SOCK_STREAM, 0);
