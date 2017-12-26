@@ -823,11 +823,7 @@ Handle_TCP_ST_SYN_RCVD (mtcp_manager_t mtcp, uint32_t cur_ts,
 			AddtoTimeoutList(mtcp, cur_stream);
 
 		/* raise an event to the listening socket */
-		if (listener->socket && (listener->socket->epoll & MTCP_EPOLLIN)) {
-			AddEpollEvent(mtcp->ep, 
-					MTCP_EVENT_QUEUE, listener->socket, MTCP_EPOLLIN);
-		}
-
+		RaiseAcceptEvent(mtcp, listener);
 	} else {
 		TRACE_DBG("Stream %d (TCP_ST_SYN_RCVD): No ACK.\n", 
 				cur_stream->id);

@@ -57,7 +57,7 @@
 #define PROMISCUOUS_MODE	TRUE
 
 /* blocking api became obsolete */
-#define BLOCKING_SUPPORT	FALSE
+#define BLOCKING_SUPPORT	TRUE
 
 #ifndef MAX_CPUS
 #define MAX_CPUS		16

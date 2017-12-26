@@ -100,6 +100,28 @@ EqualFlow(const void *f1, const void *f2)
 			flow1->daddr == flow2->daddr &&
 			flow1->dport == flow2->dport);
 }
+
+/*---------------------------------------------------------------------------*/
+inline void 
+RaiseAcceptEvent(mtcp_manager_t mtcp, struct tcp_listener *listener)
+{
+	if (listener->socket) {
+		if (listener->socket->epoll & MTCP_EPOLLIN) {
+			AddEpollEvent(mtcp->ep, 
+					MTCP_EVENT_QUEUE, listener->socket, MTCP_EPOLLIN);
+#if BLOCKING_SUPPORT
+		} else if (!(listener->socket->opts & MTCP_NONBLOCK)) {
+			pthread_mutex_lock(&listener->accept_lock);
+			pthread_cond_signal(&listener->accept_cond);
+			pthread_mutex_unlock(&listener->accept_lock);	
+#endif
+		}
+	} else {
+		TRACE_EPOLL("Stream %d: Raising read without a socket!\n", stream->id);
+	}
+}
+
+
 /*---------------------------------------------------------------------------*/
 inline void 
 RaiseReadEvent(mtcp_manager_t mtcp, tcp_stream *stream)
@@ -458,7 +480,7 @@ DestroyTCPStream(mtcp_manager_t mtcp, tcp_stream *stream)
 		mtcp->rcv_br_list_cnt--;
 	}
 
-	if (!stream->epoll) {
+	if (!stream->socket->epoll) {
 		pthread_cond_signal(&stream->rcvvar->read_cond);
 		pthread_cond_signal(&stream->sndvar->write_cond);
 	}

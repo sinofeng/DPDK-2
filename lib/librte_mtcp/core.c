@@ -341,7 +341,8 @@ PrintNetworkStats(mtcp_manager_t mtcp, uint32_t cur_ts)
 }
 #endif /* NETSTAT */
 /*----------------------------------------------------------------------------*/
-#if BLOCKING_SUPPORT
+//#if BLOCKING_SUPPORT 
+#if 0
 static inline void 
 FlushAcceptEvents(mtcp_manager_t mtcp)
 {
