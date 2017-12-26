@@ -76,8 +76,8 @@ int main (int argc, char *argv[]) {
 		exit(-1);
 	}
 	
-  mtcp_core_affinitize(2);
-  mctx = mtcp_create_context(3);
+  mtcp_core_affinitize(0);
+  mctx = mtcp_create_context(0);
   server_fd = mtcp_socket(mctx, AF_INET, SOCK_STREAM, 0);
   if (server_fd < 0) on_error("Could not create socket\n");
 
