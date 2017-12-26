@@ -159,16 +159,24 @@ int main (int argc, char *argv[]) {
   }
  
   while (retry < max_echo_times) {
-		one_way_sended_tick = rte_get_tsc_hz();
-    ret = mtcp_write(mctx, sockid, "12312313", strlen("12312313"));
-    if (ret < 0) 
-      on_error("Client write failed\n");
+		int read, write;
+
+		while(1) {
+			one_way_sended_tick = rte_get_tsc_hz();
+	    write = mtcp_write(mctx, sockid, "12312313", strlen("12312313"));
+	    if (write == 0) {
+	      on_error("Client write failed\n");
+				exit(1);
+			} else if (write < 0 && errno == EAGAIN) {
+				continue;
+			}
+		}
 
     while (1) {
-      int read = mtcp_recv(mctx, sockid, buf, BUFFER_SIZE, 0);
+      read = mtcp_recv(mctx, sockid, buf, BUFFER_SIZE, 0);
       if(read == 0) {
         on_error("Client read failed\n");
-        break;
+				exit(1);
       } else if (read < 0 && errno == EAGAIN) {
 				continue;
 			}

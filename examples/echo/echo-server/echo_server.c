@@ -101,26 +101,35 @@ int main (int argc, char *argv[]) {
 
   while (1) {
     socklen_t client_len = sizeof(client);
-    int read;
+    int read, write;
     
     client_fd = mtcp_accept(mctx, server_fd, (struct sockaddr *) &client, &client_len);
 
     if (client_fd < 0) 
       on_error("Could not establish new connection\n");
 
+		printf("new connection fd %d comming\n", client_fd);
     mtcp_setsock_nonblock(mctx, client_fd);
     while (1) {
-      read = mtcp_recv(mctx, client_fd, buf, BUFFER_SIZE, 0);
-      if(read == 0) {
-        on_error("Client read failed\n");
-        break;
-      } else if (read < 0 && errno == EAGAIN) {
-				continue;
+			while(1) {
+	      read = mtcp_recv(mctx, client_fd, buf, BUFFER_SIZE, 0);
+	      if(read == 0) {
+	        on_error("Client read failed\n");
+	        exit(0);
+	      } else if (read < 0 && errno == EAGAIN) {
+					continue;
+				}
 			}
 
-	    err = mtcp_write(mctx, client_fd, buf, (size_t)read);
-	    if (err < 0) 
-	      on_error("Client write failed\n");
+			while(1) {
+		    write = mtcp_write(mctx, client_fd, buf, (size_t)read);
+		    if (write == 0) {
+		      on_error("Client write failed\n");
+					exit(0);
+				} else if (write < 0 && errno == EAGAIN) {
+					continue;
+				}
+			}
     }
   }
 
