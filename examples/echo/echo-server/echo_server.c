@@ -19,6 +19,8 @@
 #include <errno.h>
 
 #include <mtcp_api.h>
+#include <netlib.h>
+#include <cpu.h>
 
 #define BUFFER_SIZE 1024
 #define ECHO_PORT 6999
