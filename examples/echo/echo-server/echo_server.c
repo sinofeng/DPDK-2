@@ -28,6 +28,13 @@
 
 static int num_cores;
 static int core_limit;
+static int do_shutdown = 0;
+
+void 
+SignalHandler(int signum)
+{
+	do_shutdown = 1;
+}
 
 int main (int argc, char *argv[]) {
   struct mtcp_conf mcfg;
@@ -111,7 +118,13 @@ int main (int argc, char *argv[]) {
 		printf("new connection fd %d comming\n", client_fd);
     mtcp_setsock_nonblock(mctx, client_fd);
     while (1) {
+			if(do_shutdown)
+				break;
+
 			while(1) {
+				if(do_shutdown)
+					break;
+
 	      read = mtcp_recv(mctx, client_fd, buf, BUFFER_SIZE, 0);
 	      if(read == 0) {
 	        on_error("Client read failed\n");
@@ -122,6 +135,9 @@ int main (int argc, char *argv[]) {
 			}
 
 			while(1) {
+				if(do_shutdown)
+					break;
+
 		    write = mtcp_write(mctx, client_fd, buf, (size_t)read);
 		    if (write == 0) {
 		      on_error("Client write failed\n");

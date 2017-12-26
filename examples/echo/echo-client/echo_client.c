@@ -32,6 +32,7 @@
 
 static int num_cores;
 static int core_limit;
+static int do_shutdown = 0;
 
 static char* pfring_format_numbers(double val, char *buf, u_int buf_len, u_int8_t add_decimals) {
   uint32_t a1 = ((u_long)val / 1000000000) % 1000;
@@ -71,6 +72,12 @@ static double ticks_to_us(uint64_t dtick,const uint64_t hz){
   return ((double) 1000000 /* us */) / ( hz / dtick );
 }
 
+void 
+SignalHandler(int signum)
+{
+	do_shutdown = 1;
+}
+
 int main (int argc, char *argv[]) {
   struct mtcp_conf mcfg;
   char *conf_file;  
@@ -87,6 +94,7 @@ int main (int argc, char *argv[]) {
 
   num_cores = GetNumCPUs();
   core_limit = num_cores;    
+	mtcp_register_signal(SIGINT, SignalHandler);
 
   while (-1 != (o = getopt(argc, argv, "N:f:C:"))) {
     switch(o) {
@@ -161,8 +169,15 @@ int main (int argc, char *argv[]) {
   while (retry < max_echo_times) {
 		int read, write;
 
+		if(do_shutdown)
+			break;
+
 		while(1) {
 			one_way_sended_tick = rte_get_tsc_hz();
+
+			if(do_shutdown)
+				break;
+
 	    write = mtcp_write(mctx, sockid, "12312313", strlen("12312313"));
 	    if (write == 0) {
 	      on_error("Client write failed\n");
@@ -173,6 +188,9 @@ int main (int argc, char *argv[]) {
 		}
 
     while (1) {
+			if(do_shutdown)
+				break;
+
       read = mtcp_recv(mctx, sockid, buf, BUFFER_SIZE, 0);
       if(read == 0) {
         on_error("Client read failed\n");
