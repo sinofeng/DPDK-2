@@ -117,9 +117,9 @@ int main (int argc, char *argv[]) {
       if(read == 0) {
         on_error("Client read failed\n");
         break;
-      } else {
-        continue;
-      }
+      } else if (read < 0 && errno == EAGAIN) {
+				continue;
+			}
     }
   }
 

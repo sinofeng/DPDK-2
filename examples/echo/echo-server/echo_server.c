@@ -16,6 +16,7 @@
 #include <sys/queue.h>
 #include <assert.h>
 #include <limits.h>
+#include <errno.h>
 
 #include <mtcp_api.h>
 
@@ -111,14 +112,14 @@ int main (int argc, char *argv[]) {
       if(read == 0) {
         on_error("Client read failed\n");
         break;
-      } else {
-        continue;
-      }
+      } else if (read < 0 && errno == EAGAIN) {
+				continue;
+			}
+
+	    err = mtcp_write(mctx, client_fd, buf, (size_t)read);
+	    if (err < 0) 
+	      on_error("Client write failed\n");
     }
-  
-    err = mtcp_write(mctx, client_fd, buf, (size_t)read);
-    if (err < 0) 
-      on_error("Client write failed\n"); 
   }
 
   return 0;

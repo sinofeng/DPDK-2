@@ -208,6 +208,9 @@ AddEpollEvent(struct mtcp_epoll *ep,
 		int queue_type, socket_map_t socket, uint32_t event);
 
 extern inline void 
+RaiseAcceptEvent(mtcp_manager_t mtcp, struct tcp_listener *listener);
+
+extern inline void 
 RaiseReadEvent(mtcp_manager_t mtcp, tcp_stream *stream);
 
 extern inline void 
