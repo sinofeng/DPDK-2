@@ -25,13 +25,59 @@
 #define ECHO_ECHO_PORT 6999
 #define on_error(...) { fprintf(stderr, __VA_ARGS__); fflush(stderr); exit(1); }
 
+static int num_cores;
+static int core_limit;
+
 int main (int argc, char *argv[]) {
+	struct mtcp_conf mcfg;
+	char *conf_file;	
   mctx_t mctx;
   int sockid;
   struct sockaddr_in addr;
   char buf[BUFFER_SIZE];
-  int ret;
+  int ret, o;
 
+	num_cores = GetNumCPUs();
+	core_limit = num_cores;    
+
+	while (-1 != (o = getopt(argc, argv, "N:f:"))) {
+		switch(o) {
+		case 'N':
+			core_limit = mystrtol(optarg, 10);
+			if (core_limit > num_cores) {
+				on_error("CPU limit should be smaller than the "
+					     "number of CPUS: %d\n", num_cores);
+				return -1;
+			} else if (core_limit < 1) {
+				on_error("CPU limit should be greater than 0\n");
+				return -1;
+			}
+			/** 
+			 * it is important that core limit is set 
+			 * before mtcp_init() is called. You can
+			 * not set core_limit after mtcp_init()
+			 */
+			mtcp_getconf(&mcfg);
+			mcfg.num_cores = core_limit;
+			mtcp_setconf(&mcfg);
+			break;
+		case 'f':
+			conf_file = optarg;
+			break;
+		}
+	}	
+
+	if (conf_file == NULL) {
+		on_error("mTCP configuration file is not set!\n");
+		exit(-1);
+	}
+	
+	ret = mtcp_init(conf_file);
+	if (ret) {
+		on_error("Failed to initialize mtcp.\n");
+		exit(-1);
+	}
+	
   mtcp_core_affinitize(2);
   mctx = mtcp_create_context(3);
   sockid = mtcp_socket(mctx, AF_INET, SOCK_STREAM, 0);
