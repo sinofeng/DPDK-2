@@ -89,12 +89,6 @@ int main (int argc, char *argv[]) {
 
   printf("connect to %s:%d\n", ECHO_SERVER_IP, ECHO_ECHO_PORT);
 
-	ret = mtcp_setsock_nonblock(mctx, sockid);
-	if (ret < 0) {
-		on_error("Failed to set socket in nonblocking mode.\n");
-		exit(-1);
-	}
-
 	ret = mtcp_connect(mctx, sockid, 
 			(struct sockaddr *)&addr, sizeof(struct sockaddr_in));
 
@@ -105,7 +99,13 @@ int main (int argc, char *argv[]) {
 			return -1;
 		}
 	}
-  
+ 
+	ret = mtcp_setsock_nonblock(mctx, sockid);
+	if (ret < 0) {
+		on_error("Failed to set socket in nonblocking mode.\n");
+		exit(-1);
+	}
+ 
   while (1) {
 	  ret = mtcp_write(mctx, sockid, "12312313", strlen("12312313"));
 	  if (ret < 0) on_error("Client write failed\n");

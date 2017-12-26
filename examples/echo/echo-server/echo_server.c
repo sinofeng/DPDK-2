@@ -108,10 +108,10 @@ int main (int argc, char *argv[]) {
 	  } else {
 		  continue;
 	  }
-
-      err = mtcp_write(mctx, client_fd, buf, read);
-      if (err < 0) on_error("Client write failed\n");
     }
+	
+      err = mtcp_write(mctx, client_fd, buf, (size_t)read);
+      if (err < 0) on_error("Client write failed\n");	
   }
 
   return 0;
