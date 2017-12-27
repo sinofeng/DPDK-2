@@ -7,7 +7,9 @@
 #include "mtcp.h"
 #include "tcp_in.h"
 
-static double mtcp_ticks_to_us(uint64_t dtick,const uint64_t hz){
+#include <rte_cycles.h>
+
+static inline double mtcp_ticks_to_us(uint64_t dtick,const uint64_t hz){
   return ((double) 1000000 /* us */) / ( hz / dtick );
 }
 
