@@ -88,8 +88,8 @@ int main (int argc, char *argv[]) {
 
 	mtcp_register_signal(SIGINT, SignalHandler);
 
-  mtcp_core_affinitize(0);
-  mctx = mtcp_create_context(0);
+  mtcp_core_affinitize(1);
+  mctx = mtcp_create_context(2);
   server_fd = mtcp_socket(mctx, AF_INET, SOCK_STREAM, 0);
   if (server_fd < 0) 
     on_error("Could not create socket\n");
@@ -111,7 +111,8 @@ int main (int argc, char *argv[]) {
   while (1) {
     socklen_t client_len = sizeof(client);
     int read, write;
-    
+
+new_accept:    
     client_fd = mtcp_accept(mctx, server_fd, (struct sockaddr *) &client, &client_len);
 
     if (client_fd < 0) 
@@ -130,7 +131,7 @@ int main (int argc, char *argv[]) {
 	      read = mtcp_recv(mctx, client_fd, buf, BUFFER_SIZE, 0);
 	      if(read == 0) {
 	        on_error("Client read failed\n");
-	        exit(0);
+	        goto new_accept;
 	      } else if (read < 0 && errno == EAGAIN) {
 					continue;
 				} else {
@@ -145,7 +146,7 @@ int main (int argc, char *argv[]) {
 		    write = mtcp_write(mctx, client_fd, buf, (size_t)read);
 		    if (write == 0) {
 		      on_error("Client write failed\n");
-					exit(0);
+	        goto new_accept;
 				} else if (write < 0 && errno == EAGAIN) {
 					continue;
 				} else {
