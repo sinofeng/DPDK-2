@@ -107,7 +107,7 @@ enum tcp_close_reason
 };
 
 void 
-ParseTCPOptions(tcp_stream *cur_stream, 
+ParseTCPOptions(mtcp_manager_t mtcp, tcp_stream *cur_stream, 
 		uint32_t cur_ts, uint8_t *tcpopt, int len);
 
 extern inline int 

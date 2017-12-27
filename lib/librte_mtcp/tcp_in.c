@@ -69,7 +69,7 @@ HandlePassiveOpen(mtcp_manager_t mtcp, uint32_t cur_ts, const struct iphdr *iph,
 	cur_stream->sndvar->peer_wnd = window;
 	cur_stream->rcv_nxt = cur_stream->rcvvar->irs;
 	cur_stream->sndvar->cwnd = 1;
-	ParseTCPOptions(cur_stream, cur_ts, (uint8_t *)tcph + TCP_HEADER_LEN, 
+	ParseTCPOptions(mtcp, cur_stream, cur_ts, (uint8_t *)tcph + TCP_HEADER_LEN, 
 			(tcph->doff << 2) - TCP_HEADER_LEN);
 
 	return cur_stream;
@@ -85,7 +85,7 @@ HandleActiveOpen(mtcp_manager_t mtcp, tcp_stream *cur_stream, uint32_t cur_ts,
 	cur_stream->rcvvar->snd_wl1 = cur_stream->rcvvar->irs - 1;
 	cur_stream->rcv_nxt = cur_stream->rcvvar->irs + 1;
 	cur_stream->rcvvar->last_ack_seq = ack_seq;
-	ParseTCPOptions(cur_stream, cur_ts, (uint8_t *)tcph + TCP_HEADER_LEN, 
+	ParseTCPOptions(mtcp, cur_stream, cur_ts, (uint8_t *)tcph + TCP_HEADER_LEN, 
 			(tcph->doff << 2) - TCP_HEADER_LEN);
 	cur_stream->sndvar->cwnd = ((cur_stream->sndvar->cwnd == 1)? 
 			(cur_stream->sndvar->mss * 2): cur_stream->sndvar->mss);

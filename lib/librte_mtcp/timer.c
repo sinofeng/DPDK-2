@@ -389,7 +389,7 @@ CheckRtmTimeout(mtcp_manager_t mtcp, uint32_t cur_ts, int thresh)
 			next = TAILQ_NEXT(walk, sndvar->timer_link);
 
 			TRACE_LOOP("Inside rto list. cnt: %u, stream: %d\n", 
-					cnt, walk->s_id);
+					cnt, walk->id);
 
 			if (walk->on_rto_idx >= 0) {
 				TAILQ_REMOVE(rto_list, walk, sndvar->timer_link);
@@ -436,7 +436,7 @@ CheckTimewaitExpire(mtcp_manager_t mtcp, uint32_t cur_ts, int thresh)
 		next = TAILQ_NEXT(walk, sndvar->timer_link);
 		
 		TRACE_LOOP("Inside timewait list. cnt: %u, stream: %d\n", 
-				cnt, walk->s_id);
+				cnt, walk->id);
 		
 		if (walk->on_timewait_list) {
 			if ((int32_t)(cur_ts - walk->rcvvar->ts_tw_expire) >= 0) {

@@ -544,7 +544,7 @@ RunWgetMain(void *arg)
 	struct mtcp_epoll_event *events;
 	int nevents;
 	struct wget_vars *wvars;
-	mtcp_manager_t mtcp = GetMTCPManager(mctx);	
+	mtcp_manager_t mtcp;	
 	int i;
 
 	struct timeval cur_tv, prev_tv;
@@ -557,6 +557,7 @@ RunWgetMain(void *arg)
 		return NULL;
 	}
 	mctx = ctx->mctx;
+	mtcp = GetMTCPManager(mctx);
 	g_ctx[core] = ctx;
 	g_stat[core] = &ctx->stat;
 	srand(time(NULL));

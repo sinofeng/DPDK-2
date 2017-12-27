@@ -117,7 +117,7 @@ RaiseAcceptEvent(mtcp_manager_t mtcp, struct tcp_listener *listener)
 #endif
 		}
 	} else {
-		TRACE_EPOLL("Stream %d: Raising read without a socket!\n", stream->id);
+		TRACE_EPOLL("Stream %d: Raising accept without a socket!\n", listener->sockid);
 	}
 }
 

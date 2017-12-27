@@ -12,7 +12,7 @@
 
 /*---------------------------------------------------------------------------*/
 void 
-ParseTCPOptions(tcp_stream *cur_stream, 
+ParseTCPOptions(mtcp_manager_t mtcp, tcp_stream *cur_stream, 
 		uint32_t cur_ts, uint8_t *tcpopt, int len)
 {
 	int i;
@@ -93,7 +93,7 @@ ParseTCPTimestamp(tcp_stream *cur_stream,
 #if TCP_OPT_SACK_ENABLED
 /*----------------------------------------------------------------------------*/
 void 
-ParseSACKOption(tcp_stream *cur_stream, 
+ParseSACKOption(mtcp_manager_t mtcp, tcp_stream *cur_stream, 
 		uint32_t ack_seq, uint8_t *tcpopt, int len)
 {
 	int i, j;
