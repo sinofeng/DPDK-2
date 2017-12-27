@@ -480,7 +480,7 @@ DestroyTCPStream(mtcp_manager_t mtcp, tcp_stream *stream)
 		mtcp->rcv_br_list_cnt--;
 	}
 
-	if (!stream->socket->epoll) {
+	if (stream->socket && !stream->socket->epoll) {
 		pthread_cond_signal(&stream->rcvvar->read_cond);
 		pthread_cond_signal(&stream->sndvar->write_cond);
 	}
