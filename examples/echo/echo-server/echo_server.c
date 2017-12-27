@@ -133,6 +133,8 @@ int main (int argc, char *argv[]) {
 	        exit(0);
 	      } else if (read < 0 && errno == EAGAIN) {
 					continue;
+				} else {
+				  break;
 				}
 			}
 
@@ -146,6 +148,8 @@ int main (int argc, char *argv[]) {
 					exit(0);
 				} else if (write < 0 && errno == EAGAIN) {
 					continue;
+				} else {
+				  break;
 				}
 			}
     }
