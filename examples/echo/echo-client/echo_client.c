@@ -205,6 +205,7 @@ int main (int argc, char *argv[]) {
     }
 
 		packets_received++;
+		retry++;
 		curr_ticks_diff = (rte_rdtsc() - one_way_sended_tick)/2;
 		if(curr_ticks_diff > max_delay) max_delay = curr_ticks_diff;
 		if(curr_ticks_diff < min_delay) min_delay = curr_ticks_diff;
