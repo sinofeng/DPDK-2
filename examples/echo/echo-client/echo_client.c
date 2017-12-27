@@ -173,7 +173,7 @@ int main (int argc, char *argv[]) {
 			break;
 
 		while(1) {
-			one_way_sended_tick = rte_get_tsc_hz();
+			one_way_sended_tick = rte_rdtsc();
 
 			if(do_shutdown)
 				break;
@@ -205,13 +205,13 @@ int main (int argc, char *argv[]) {
     }
 
 		packets_received++;
-		curr_ticks_diff = (rte_get_tsc_hz() - one_way_sended_tick)/2;
+		curr_ticks_diff = (rte_rdtsc() - one_way_sended_tick)/2;
 		if(curr_ticks_diff > max_delay) max_delay = curr_ticks_diff;
 		if(curr_ticks_diff < min_delay) min_delay = curr_ticks_diff;
 		sum_delay += curr_ticks_diff;
 		
 		if(ticks_to_us(curr_ticks_diff, rte_get_tsc_hz()) > 20.0f)
-			printf("ping seq %d reply %f us over 20 us, warnnging packet\n", retry, ticks_to_us(curr_ticks_diff, rte_get_tsc_hz()));
+			printf("echo seq %d reply %f us over 20 us, warnnging packet\n", retry, ticks_to_us(curr_ticks_diff, rte_get_tsc_hz()));
   }
 
   if(packets_received > 0) {
