@@ -206,9 +206,9 @@ static inline double mtcp_ticks_to_us(uint64_t dtick,const uint64_t hz){
 #ifdef DBGFUNC
 
 #define TRACE_FUNC(n, f, m...) {                                         \
-	thread_printf(mtcp, mtcp->log_fp, "[%09.3f %6s: %10s:%4d] ", \
+	thread_printf(mtcp, mtcp->log_fp, "[%09.3f %6s: %10s:%4d] "f, \
 			mtcp_ticks_to_us(rte_rdtsc(), rte_get_tsc_hz()),  \
-			f, n, __FUNCTION__, __LINE__, ##m);    \
+			n, __FUNCTION__, __LINE__, ##m);    \
 	}
 
 #else
