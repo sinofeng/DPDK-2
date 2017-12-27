@@ -137,8 +137,8 @@ int main (int argc, char *argv[]) {
   }
   
 	mtcp_register_signal(SIGINT, SignalHandler);
-  mtcp_core_affinitize(1);
-  mctx = mtcp_create_context(2);
+  mtcp_core_affinitize(0);
+  mctx = mtcp_create_context(0);
   sockid = mtcp_socket(mctx, AF_INET, SOCK_STREAM, 0);
   if (sockid < 0) 
     on_error("Could not create socket\n");

@@ -88,8 +88,8 @@ int main (int argc, char *argv[]) {
 
 	mtcp_register_signal(SIGINT, SignalHandler);
 
-  mtcp_core_affinitize(1);
-  mctx = mtcp_create_context(2);
+  mtcp_core_affinitize(0);
+  mctx = mtcp_create_context(0);
   server_fd = mtcp_socket(mctx, AF_INET, SOCK_STREAM, 0);
   if (server_fd < 0) 
     on_error("Could not create socket\n");
@@ -130,7 +130,7 @@ new_accept:
 
 	      read = mtcp_recv(mctx, client_fd, buf, BUFFER_SIZE, 0);
 	      if(read == 0) {
-	        on_error("Client read failed\n");
+	        printf("Client read failed\n");
 	        goto new_accept;
 	      } else if (read < 0 && errno == EAGAIN) {
 					continue;
@@ -145,7 +145,7 @@ new_accept:
 
 		    write = mtcp_write(mctx, client_fd, buf, (size_t)read);
 		    if (write == 0) {
-		      on_error("Client write failed\n");
+		      printf("Client write failed\n");
 	        goto new_accept;
 				} else if (write < 0 && errno == EAGAIN) {
 					continue;
