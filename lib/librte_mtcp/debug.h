@@ -12,7 +12,7 @@
 static inline double mtcp_ticks_to_us(uint64_t dtick,const uint64_t hz){
   return ((double) 1000000 /* us */) / ( hz / dtick );
 }
-
+extern uint64_t mtcp_uptick;
 #ifdef DBGTEMP
 
 #define TRACE_TEMP(f, m...) { \
@@ -207,7 +207,7 @@ static inline double mtcp_ticks_to_us(uint64_t dtick,const uint64_t hz){
 
 #define TRACE_FUNC(n, f, m...) {                                         \
 	thread_printf(mtcp, mtcp->log_fp, "[%09.3f %6s: %10s:%4d] "f, \
-			mtcp_ticks_to_us(rte_rdtsc(), rte_get_tsc_hz()),  \
+			mtcp_ticks_to_us(rte_rdtsc()-mtcp_uptick, rte_get_tsc_hz()),  \
 			n, __FUNCTION__, __LINE__, ##m);    \
 	}
 

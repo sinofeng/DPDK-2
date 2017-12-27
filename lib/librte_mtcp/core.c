@@ -32,6 +32,7 @@
 /* for launching rte thread */
 #include <rte_launch.h>
 #include <rte_lcore.h>
+#include <rte_cycles.h>
 
 #define PS_CHUNK_SIZE 64
 #define RX_THRESH (PS_CHUNK_SIZE * 0.8)
@@ -68,6 +69,8 @@ static int sigint_cnt[MAX_CPUS] = {0};
 static struct timespec sigint_ts[MAX_CPUS];
 /*----------------------------------------------------------------------------*/
 static int mtcp_master = -1;
+uint64_t mtcp_uptick;
+
 void 
 mtcp_free_context(mctx_t mctx);
 /*----------------------------------------------------------------------------*/
@@ -1418,6 +1421,8 @@ mtcp_init(const char *config_file)
 		TRACE_CONFIG("[CAUTION] Run the app as root!\n");
 		exit(EXIT_FAILURE);
 	}
+
+	mtcp_uptick = rte_rdtsc();
 
 	/* getting cpu and NIC */
 	/* set to max cpus only if user has not arbitrarily set it to lower # */
